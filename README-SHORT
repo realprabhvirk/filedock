@@ -1,0 +1,60 @@
+
+A temporary shelf for your files on Windows. Collect files from different folders, then drag them all out together into another folder, an email, a browser upload, or any app that accepts dropped files.
+
+FileDock only remembers where your files are. It never copies, moves, renames, or uploads them.
+
+How it works
+
+1. A thin handle sits on the edge of your screen.
+2. Drag files from File Explorer toward it. The shelf opens instantly.
+3. Drop them in. Repeat from as many folders as you like.
+4. Drag the "Drag all N items" strip (or a selection) into your destination.
+
+The shelf keeps your items until you remove them, so you can reuse them as often as you need.
+
+Features
+
+- Edge handle that stays out of the way. It is about 10 px wide, expands on hover or when you drag files over it, and auto-collapses. It can also be pinned open.
+- Native drag and drop in both directions. Outgoing drags are copy-only, so your originals are never moved or deleted.
+- Files and folders, with duplicates ignored and missing files clearly marked.
+- Undo for removing items or clearing the shelf.
+- Remembers your shelf between restarts. Everything is stored locally, with no network access, telemetry, or accounts.
+- System tray icon, plus a global show/hide shortcut (default Ctrl+Alt+Space, changeable in Settings).
+- Left or right edge placement, multi-monitor support, and a start-with-Windows option (off by default).
+- Follows your Windows light/dark theme and accent colour.
+
+Download
+
+Grab FileDock.exe from the Releases (../../releases) page. It is a single self-contained file, so no .NET installation is needed.
+
+Requirements: Windows 10 or 11, 64-bit.
+
+▎ The executable is not code-signed, so Windows SmartScreen may warn on first run. Choose More info → Run anyway.
+
+To exit completely, right-click the tray icon and choose Exit.
+
+Build from source
+
+Requires the .NET 10 SDK (https://dotnet.microsoft.com/download/dotnet/10.0).
+
+dotnet build FileDock.slnx
+dotnet test FileDock.slnx
+dotnet publish src\FileDock\FileDock.csproj -p:PublishProfile=win-x64
+
+The published file appears at publish\win-x64\FileDock.exe.
+
+Tech
+
+C# · .NET 10 · WPF (MVVM) · Win32/Shell interop · System.Text.Json · xUnit
+
+Known limitations
+
+- Only real files and folders can be added. Items that exist only inside another app, such as files inside a .zip or Outlook attachments, can't be staged.
+- Dropping into apps running as administrator won't work unless FileDock runs elevated too (a Windows restriction).
+- Tested on Windows 10 with a single display. Windows 11, multi-monitor setups, Outlook, and screen readers are untested.
+
+Data location
+
+%LOCALAPPDATA%\FileDock\ holds shelf.json, settings.json, and a small capped log. Delete the folder to reset the app.
+
+---
