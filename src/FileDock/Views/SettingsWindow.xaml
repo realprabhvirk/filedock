@@ -1,0 +1,147 @@
+<Window x:Class="FileDock.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="FileDock Settings"
+        Width="440" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Assets/FileDock.ico"
+        Background="{DynamicResource Brush.Panel}"
+        Foreground="{DynamicResource Brush.Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="12"
+        TextOptions.TextFormattingMode="Display" UseLayoutRounding="True">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,16,0" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="24,6,24,20">
+
+        <!-- Position -->
+        <TextBlock Text="Position" Style="{StaticResource SectionHeader}" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Screen edge" Style="{StaticResource Label}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <RadioButton Style="{StaticResource Segment}" GroupName="Edge" Content="Right" IsChecked="{Binding DockRight}" />
+                <RadioButton Style="{StaticResource Segment}" GroupName="Edge" Content="Left" IsChecked="{Binding DockLeft}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="1" Text="Display" Style="{StaticResource Label}" Margin="0,12,16,0"
+                       Visibility="{Binding HasMultipleDisplays, Converter={StaticResource BoolToVis}}" />
+            <ItemsControl Grid.Row="1" Grid.Column="1" Margin="0,12,0,0" ItemsSource="{Binding Displays}"
+                          Visibility="{Binding HasMultipleDisplays, Converter={StaticResource BoolToVis}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <RadioButton Style="{StaticResource Segment}" GroupName="Display" Margin="0,0,6,6"
+                                     Content="{Binding Label}" IsChecked="{Binding IsSelected}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Grid.Row="2" Text="Handle position" Style="{StaticResource Label}" Margin="0,14,16,0" />
+            <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,14,0,0">
+                <Button DockPanel.Dock="Right" Style="{StaticResource LinkButton}" Content="Centre" Margin="10,0,0,0"
+                        Command="{Binding ResetPositionCommand}" ToolTip="Move the handle back to the middle of the screen edge" />
+                <TextBlock DockPanel.Dock="Left" Text="Top" Foreground="{DynamicResource Brush.TextSecondary}"
+                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock DockPanel.Dock="Right" Text="Bottom" Foreground="{DynamicResource Brush.TextSecondary}"
+                           VerticalAlignment="Center" Margin="8,0,0,0" />
+                <Slider Style="{StaticResource FlatSlider}" Minimum="0" Maximum="100" SmallChange="1" LargeChange="10"
+                        Value="{Binding VerticalPosition}" AutomationProperties.Name="Handle position from top to bottom" />
+            </DockPanel>
+        </Grid>
+
+        <!-- Behaviour -->
+        <TextBlock Text="Behaviour" Style="{StaticResource SectionHeader}" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Close after" Style="{StaticResource Label}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <RadioButton Style="{StaticResource Segment}" GroupName="Delay" Content="0.6 s" IsChecked="{Binding DelayShort}"
+                             AutomationProperties.Name="Close after 0.6 seconds" />
+                <RadioButton Style="{StaticResource Segment}" GroupName="Delay" Content="0.9 s" IsChecked="{Binding DelayNormal}"
+                             AutomationProperties.Name="Close after 0.9 seconds" />
+                <RadioButton Style="{StaticResource Segment}" GroupName="Delay" Content="1.5 s" IsChecked="{Binding DelayLong}"
+                             AutomationProperties.Name="Close after 1.5 seconds" />
+            </StackPanel>
+        </Grid>
+        <TextBlock Style="{StaticResource Hint}" Text="How long the shelf stays open after the pointer leaves it." />
+
+        <CheckBox Style="{StaticResource Check}" Margin="0,14,0,0" IsChecked="{Binding ConfirmClear}"
+                  Content="Ask before clearing the whole shelf" />
+        <CheckBox Style="{StaticResource Check}" Margin="0,10,0,0" IsChecked="{Binding StartWithWindows}"
+                  Content="Start FileDock when I sign in to Windows" />
+        <TextBlock Text="{Binding StartupError}" Foreground="{DynamicResource Brush.Error}" Margin="28,4,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding StartupError}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Shortcut -->
+        <TextBlock Text="Keyboard shortcut" Style="{StaticResource SectionHeader}" />
+        <DockPanel>
+            <CheckBox Style="{StaticResource Check}" IsChecked="{Binding HotkeyEnabled}" Content="Show or hide with"
+                      VerticalAlignment="Center" Margin="0,0,12,0" />
+            <TextBox x:Name="ShortcutBox" Style="{StaticResource FieldBox}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                     Text="{Binding HotkeyText, Mode=OneWay}" Cursor="Hand"
+                     IsEnabled="{Binding HotkeyEnabled}"
+                     AutomationProperties.Name="Shortcut. Focus this box and press a new key combination."
+                     GotKeyboardFocus="OnShortcutFocus" LostKeyboardFocus="OnShortcutBlur"
+                     PreviewKeyDown="OnShortcutKeyDown" PreviewKeyUp="OnShortcutKeyUp" />
+        </DockPanel>
+        <TextBlock Text="{Binding HotkeyMessage}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource Hint}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HotkeyMessageIsError}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HotkeyMessage}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Footer -->
+        <Rectangle Height="1" Fill="{DynamicResource Brush.Separator}" Margin="0,22,0,16" />
+        <DockPanel>
+            <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource StandardButton}" Content="Close"
+                    IsDefault="True" IsCancel="True" Click="OnCloseClick" />
+            <Button Style="{StaticResource LinkButton}" Content="Reset to defaults" HorizontalAlignment="Left"
+                    Command="{Binding ResetDefaultsCommand}" Margin="-6,0,0,0" />
+        </DockPanel>
+    </StackPanel>
+</Window>

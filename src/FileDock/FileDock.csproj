@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- Windows Forms is referenced only for the NotifyIcon tray integration. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>FileDock</AssemblyName>
+    <RootNamespace>FileDock</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\FileDock.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>FileDock</Product>
+    <Description>A temporary shelf for files.</Description>
+    <Copyright>FileDock</Copyright>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Plain DllImport is used deliberately for the small amount of Win32 interop. -->
+    <!-- WFO0003: DPI awareness belongs in the manifest for a WPF app; WinForms is only used for the tray icon. -->
+    <NoWarn>$(NoWarn);SYSLIB1054;CA1416;WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Avoid WPF / Windows Forms name clashes (Application, Button, MessageBox...). -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\FileDock.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WPF's stylus/touch stack enumerates tablet devices for every new window. On machines with
+         touch or virtual-display drivers that took 2-3 s per window (measured). FileDock is a mouse
+         and drag-and-drop utility; Windows still promotes touch and pen input to mouse input. -->
+    <RuntimeHostConfigurationOption Include="Switch.System.Windows.Input.Stylus.DisableStylusAndTouchSupport" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FileDock.Tests" />
+  </ItemGroup>
+
+</Project>

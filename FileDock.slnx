@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FileDock/FileDock.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FileDock.Tests/FileDock.Tests.csproj" />
+  </Folder>
+</Solution>
