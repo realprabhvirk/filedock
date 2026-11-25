@@ -39,9 +39,12 @@ shortcut. **Reset to defaults** restores all of them.
 FileDock is distributed through [publik](https://publikhq.com/filedock). The first time it
 starts, a small window asks you to **Sign in with publik**: the button opens the sign-in page
 in your browser, and FileDock continues by itself once you are signed in. Closing that window
-exits FileDock. After that the sign-in is remembered on this computer, but FileDock checks it
-with publik at each start, so it needs an internet connection to open. If publik can't be
-reached, the window says so, offers **Retry** and retries on its own every 10 seconds.
+exits FileDock. The first sign-in needs an internet connection; if publik can't be reached, the
+window says so, offers **Retry** and retries on its own every 10 seconds.
+
+After that the sign-in is remembered on this computer (Settings shows **Signed in locally**),
+so FileDock opens at once, also offline. When publik can be reached, FileDock re-checks the
+sign-in in the background; if you signed out on publik, it asks again at the next start.
 
 While FileDock runs it also sends publik an anonymous usage count: an `app_opened` event at
 start and an `active_session` event every 30 minutes, with the app version, OS and CPU type.

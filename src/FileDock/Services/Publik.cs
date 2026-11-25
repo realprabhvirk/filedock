@@ -4,6 +4,8 @@
 //   1. loads or provisions this computer's publik key (POST /api/v1/installs);
 //   2. shows Sign in with publik until GET /api/v1/wallet says "claimed" (no other way past it);
 //   3. starts usage counting: app_opened now, active_session every 30 minutes (POST /api/v1/telemetry).
+// After the first sign-in it is remembered on this computer: later starts open at once, also
+// offline, and the sign-in is re-checked in the background whenever publik can be reached.
 // FileDock calls no AI model (USES_AI = false), so the publik API provider parts are left out.
 // PUBLIK_SELF_TEST=1 makes the built app print "publik self-test: ok <slug> <version>" and exit.
 using System.Diagnostics;
@@ -210,6 +212,67 @@ internal static class Publik
 
     private static bool Claimed(JsonObject w) => Str(w, "claim_state") == "claimed";
 
+    // ---------- Remembered sign-in ----------
+
+    /// <summary>True once this computer has signed in to publik (kept in the credential file).</summary>
+    public static bool IsSignedInLocally => Str(ReadCredential(), "signed_in_at") is not null;
+
+    /// <summary>The publik handle shown in Settings, when publik told us one.</summary>
+    public static string? SignedInHandle => Str(ReadCredential(), "handle");
+
+    private static void RememberSignIn(JsonObject wallet)
+    {
+        try
+        {
+            if (ReadCredential() is not { } c)
+                return;
+            c["signed_in_at"] ??= DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            c["handle"] = Str(wallet["account"], "handle");
+            WriteCredential(c);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn("publik: could not remember the sign-in", ex);
+        }
+    }
+
+    private static void ForgetSignIn()
+    {
+        if (ReadCredential() is not { } c)
+            return;
+        c.Remove("signed_in_at");
+        c.Remove("handle");
+        WriteCredential(c);
+    }
+
+    /// <summary>Background check of a remembered sign-in. Offline or any error: nothing changes.</summary>
+    private static async Task RecheckSignInAsync()
+    {
+        try
+        {
+            string key = Str(ReadCredential(), "key") ?? "";
+            (int code, JsonObject? w, _) = await ReadWalletAsync(key).ConfigureAwait(false);
+            if (code == 401)
+            {
+                Log.Info("publik: install key revoked; sign-in will be asked at the next start");
+                WriteCredential(new JsonObject());
+            }
+            else if (w is not null && !Claimed(w))
+            {
+                Log.Info("publik: signed out on publik; sign-in will be asked at the next start");
+                ForgetSignIn();
+            }
+            else if (w is not null)
+            {
+                RememberSignIn(w);
+            }
+        }
+        catch (Exception ex) when (ex is PublikException or IOException or UnauthorizedAccessException)
+        {
+            // Offline: keep the remembered sign-in.
+        }
+    }
+
     // ---------- The gate ----------
 
     internal sealed record Screen(string Id, string Title, string Body, string? Note, (string Id, string Label)[] Buttons);
@@ -229,6 +292,17 @@ internal static class Publik
     /// </summary>
     public static async Task<bool> EnsureSignedInAsync()
     {
+        // Signed in once on this computer: open at once, also offline. The sign-in is checked again
+        // in the background when publik can be reached; a revoked or signed-out install asks again
+        // at the next start.
+        if (Environment.GetEnvironmentVariable("PUBLIK_API_KEY") is not { Length: > 0 } && IsSignedInLocally)
+        {
+            Log.Info("publik: signed in locally");
+            StartTelemetry();
+            _ = Task.Run(RecheckSignInAsync);
+            return true;
+        }
+
         GateWindow? ui = null;
         try
         {
@@ -294,6 +368,8 @@ internal static class Publik
                 }
 
                 Log.Info("publik: signed in");
+                if (envKey is null)
+                    RememberSignIn(w);
                 StartTelemetry();
                 return true;
             }
