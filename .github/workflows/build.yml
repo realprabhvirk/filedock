@@ -1,6 +1,7 @@
 # Builds FileDock.exe on Windows, runs the tests and the publik self-test against the built exe,
 # and uploads the exe as a downloadable artifact (Actions run page → Artifacts → FileDock-win-x64).
-# Pushing a v* tag also attaches the exe to that tag's GitHub release.
+# Pushing a v* tag, or running it by hand with release_tag set, also attaches the exe to that
+# GitHub release (created if needed).
 name: Build
 
 on:
@@ -8,6 +9,11 @@ on:
     branches: ["**"]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Create this release tag (e.g. v1.1.0) at the built commit and attach the exe"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -47,11 +53,12 @@ jobs:
           if-no-files-found: error
 
       - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
         run: |
-          gh release view $env:GITHUB_REF_NAME 2>$null
-          if ($LASTEXITCODE -ne 0) { gh release create $env:GITHUB_REF_NAME --title "FileDock $env:GITHUB_REF_NAME" --generate-notes }
-          gh release upload $env:GITHUB_REF_NAME publish/win-x64/FileDock.exe --clobber
+          gh release view $env:TAG 2>$null
+          if ($LASTEXITCODE -ne 0) { gh release create $env:TAG --target $env:GITHUB_SHA --title "FileDock $env:TAG" --generate-notes }
+          gh release upload $env:TAG publish/win-x64/FileDock.exe --clobber
