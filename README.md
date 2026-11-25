@@ -34,6 +34,23 @@ Screen edge, display (when more than one is connected), handle position, close d
 confirmation before clearing, start with Windows (per-user Run key; off by default), and the
 shortcut. **Reset to defaults** restores all of them.
 
+### Sign in with publik
+
+FileDock is distributed through [publik](https://publikhq.com/filedock). The first time it
+starts, a small window asks you to **Sign in with publik**: the button opens the sign-in page
+in your browser, and FileDock continues by itself once you are signed in. Closing that window
+exits FileDock. The first sign-in needs an internet connection; if publik can't be reached, the
+window says so, offers **Retry** and retries on its own every 10 seconds.
+
+After that the sign-in is remembered on this computer (Settings shows **Signed in locally**),
+so FileDock opens at once, also offline. When publik can be reached, FileDock re-checks the
+sign-in in the background; if you signed out on publik, it asks again at the next start.
+
+While FileDock runs it also sends publik an anonymous usage count: an `app_opened` event at
+start and an `active_session` event every 30 minutes, with the app version, OS and CPU type.
+It never sends file names, paths or shelf contents. To turn usage counts off, set the
+environment variable `DO_NOT_TRACK=1` (or `PUBLIK_TELEMETRY=off`).
+
 ### Exiting completely
 
 Right-click the FileDock tray icon and choose **Exit**. Closing the panel only hides it, and
@@ -51,9 +68,12 @@ Everything is local, in `%LOCALAPPDATA%\FileDock\`:
 
 State files are written to a temporary file first and then swapped in, so a crash never leaves
 a half-written file. If a file is damaged, FileDock renames it to `*.corrupt-<date>` for
-troubleshooting and starts from a clean state. There is no network access, telemetry or account.
+troubleshooting and starts from a clean state. Shelf contents and settings never leave your
+computer.
 
-Deleting the folder resets FileDock completely.
+Deleting the folder resets FileDock. Your publik sign-in for this computer is kept separately
+in `%LOCALAPPDATA%\publik\` (shared by every app that uses publik); delete
+`%LOCALAPPDATA%\publik\apps\filedock.json` to sign FileDock out.
 
 ## Building from source
 
@@ -85,6 +105,17 @@ dotnet publish src\FileDock\FileDock.csproj -c Release -r win-x64 --self-contain
   -p:EnableCompressionInSingleFile=false -p:DebugType=embedded -o publish\win-x64
 ```
 
+The public publik app token in `publik-app-token.txt` (repo root) is compiled into the build.
+To check that a built exe has Sign in with publik on its start-up path, run it with the
+self-test switch from PowerShell. It prints one line and exits (the line is also written to
+`%LOCALAPPDATA%\FileDock\publik-self-test.txt`):
+
+```powershell
+$env:PUBLIK_SELF_TEST=1; .\publish\win-x64\FileDock.exe | Out-Host; Remove-Item Env:PUBLIK_SELF_TEST
+```
+
+`publik self-test: ok filedock <version>` means the gate works.
+
 On first launch the WPF native libraries are unpacked to `%TEMP%\.net\FileDock\`; this is
 standard for single-file WPF apps.
 
@@ -101,7 +132,8 @@ src/FileDock/
   ViewModels/              ShelfViewModel, ItemViewModel, SettingsViewModel, DragSelection
   Views/                   ShelfWindow, SettingsWindow, DockController (handle/panel behaviour)
   Services/                Shelf and settings persistence, file inspection, shell icons,
-                           drag and drop, placement, hotkey, tray, startup registration, log
+                           drag and drop, placement, hotkey, tray, startup registration, log,
+                           Publik.cs (Sign in with publik and usage counting)
   Native/                  Win32 and Windows Shell interop declarations
   Themes/                  Control styles and the light/dark/high-contrast palette
   Properties/PublishProfiles/win-x64.pubxml

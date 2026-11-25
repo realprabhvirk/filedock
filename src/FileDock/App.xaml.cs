@@ -45,6 +45,13 @@ public partial class App : Application, ISettingsHost
         base.OnStartup(e);
         Log.Initialize(DataDirectory);
 
+        // Builder check: PUBLIK_SELF_TEST=1 FileDock.exe prints the publik self-test line and exits.
+        if (Publik.SelfTestRequested)
+        {
+            Publik.RunSelfTestAndExit(DataDirectory);
+            return;
+        }
+
         // One FileDock per user session. A second launch asks the first one to show itself.
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool isFirstInstance);
         if (!isFirstInstance)
@@ -75,6 +82,30 @@ public partial class App : Application, ISettingsHost
 
         string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
         Log.Info($"FileDock {version} starting (data: {DataDirectory})");
+
+        StartAfterSignIn();
+    }
+
+    /// <summary>Sign in with publik runs before FileDock shows any window of its own.</summary>
+    private async void StartAfterSignIn()
+    {
+        bool signedIn;
+        try
+        {
+            signedIn = await Publik.EnsureSignedInAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("publik sign-in failed", ex);
+            MessageBox.Show($"FileDock could not start.\n\n{ex.Message}", "FileDock", MessageBoxButton.OK, MessageBoxImage.Error);
+            signedIn = false;
+        }
+        if (!signedIn)
+        {
+            Log.Info("Sign-in window closed; exiting");
+            Shutdown();
+            return;
+        }
 
         try
         {

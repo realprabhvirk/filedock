@@ -18,7 +18,8 @@ Features
 - Native drag and drop in both directions. Outgoing drags are copy-only, so your originals are never moved or deleted.
 - Files and folders, with duplicates ignored and missing files clearly marked.
 - Undo for removing items or clearing the shelf.
-- Remembers your shelf between restarts. Everything is stored locally, with no network access, telemetry, or accounts.
+- Remembers your shelf between restarts. Shelf contents and settings are stored locally and never leave your computer.
+- Sign in with publik once on first start (needs internet that one time; after that it's remembered and FileDock opens offline too), plus an anonymous usage count. No file names or paths are ever sent. Set DO_NOT_TRACK=1 to turn usage counts off.
 - System tray icon, plus a global show/hide shortcut (default Ctrl+Alt+Space, changeable in Settings).
 - Left or right edge placement, multi-monitor support, and a start-with-Windows option (off by default).
 - Follows your Windows light/dark theme and accent colour.

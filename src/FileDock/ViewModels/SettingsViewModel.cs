@@ -196,6 +196,12 @@ public sealed class SettingsViewModel : ObservableObject
         private set => SetProperty(ref _startupError, value);
     }
 
+    // ---------- publik ----------
+
+    public string PublikStatus { get; } = Services.Publik.SignedInHandle is { Length: > 0 } handle
+        ? $"Signed in locally as @{handle}."
+        : "Signed in locally on this computer.";
+
     // ---------- Shortcut ----------
 
     public bool HotkeyEnabled

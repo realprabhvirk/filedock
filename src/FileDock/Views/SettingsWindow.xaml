@@ -135,6 +135,11 @@
             </TextBlock.Style>
         </TextBlock>
 
+        <!-- publik -->
+        <TextBlock Text="publik" Style="{StaticResource SectionHeader}" />
+        <TextBlock Text="{Binding PublikStatus}" TextWrapping="Wrap" />
+        <TextBlock Style="{StaticResource Hint}" Text="FileDock remembers your publik sign-in, so it opens without an internet connection." />
+
         <!-- Footer -->
         <Rectangle Height="1" Fill="{DynamicResource Brush.Separator}" Margin="0,22,0,16" />
         <DockPanel>

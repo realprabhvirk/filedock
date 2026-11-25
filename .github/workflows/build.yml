@@ -1,0 +1,57 @@
+# Builds FileDock.exe on Windows, runs the tests and the publik self-test against the built exe,
+# and uploads the exe as a downloadable artifact (Actions run page → Artifacts → FileDock-win-x64).
+# Pushing a v* tag also attaches the exe to that tag's GitHub release.
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Test
+        run: dotnet test FileDock.slnx -c Release
+
+      - name: Publish FileDock.exe
+        run: dotnet publish src\FileDock\FileDock.csproj -p:PublishProfile=win-x64
+
+      - name: publik self-test (built exe)
+        shell: pwsh
+        run: |
+          $env:PUBLIK_SELF_TEST = "1"
+          $p = Start-Process -FilePath "publish\win-x64\FileDock.exe" -Wait -PassThru -NoNewWindow
+          Remove-Item Env:PUBLIK_SELF_TEST
+          $file = Join-Path $env:LOCALAPPDATA "FileDock\publik-self-test.txt"
+          if (-not (Test-Path $file)) { throw "No self-test line: the gate is not on the start-up path." }
+          $line = (Get-Content $file -Raw).Trim()
+          Write-Host $line
+          if ($line -notlike "publik self-test: ok *") { throw $line }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FileDock-win-x64
+          path: publish/win-x64/FileDock.exe
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view $env:GITHUB_REF_NAME 2>$null
+          if ($LASTEXITCODE -ne 0) { gh release create $env:GITHUB_REF_NAME --title "FileDock $env:GITHUB_REF_NAME" --generate-notes }
+          gh release upload $env:GITHUB_REF_NAME publish/win-x64/FileDock.exe --clobber
